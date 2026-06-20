@@ -1,85 +1,54 @@
-# Sistema Web de Agendamento SaaS 3D
+# AgendaPro Marketplace SaaS
 
-Projeto React + Vite pronto para GitHub e Cloudflare Pages.
+Sistema web de agendamento em formato SaaS para alugar para empresas e autônomos.
 
-## Recursos incluídos
+## O que foi atualizado
 
-- Layout elegante, colorido, 3D e totalmente responsivo.
-- Cliente solicita agendamento pelo formulário.
-- Status do cliente fica em laranja: **Aguardando confirmação**.
-- Painel do prestador com login e senha.
-- Prestador visualiza agendamentos pendentes e confirmados.
-- Prestador pode confirmar, editar, remover e mandar mensagem no WhatsApp do cliente.
-- Quando confirmado, o painel do cliente muda para verde: **Confirmado**.
-- Cadastro, edição e remoção de serviços.
-- Serviço com nome, valor, categoria, descrição e imagem opcional.
-- Personalização de nome da empresa, segmento, cores, logo e banners.
-- Logo ajustada automaticamente para preencher a moldura sem deformar.
-- Campo para WhatsApp do prestador.
-- Ao cliente finalizar o agendamento, o sistema abre o WhatsApp do prestador com a mensagem pronta contendo cliente, serviço, data e horário.
+- Página principal em formato de vitrine/marketplace.
+- Lista lateral com empresas/autônomos cadastrados.
+- Ao clicar em uma empresa, aparece a vitrine própria dela com logo, banners, descrição, serviços/produtos, valores e fotos.
+- O público escolhe um produto/serviço e solicita agendamento.
+- O agendamento entra como **Aguardando confirmação** em laranja.
+- Área do prestador separada da página principal.
+- Área de suporte separada para criação de logins dos clientes.
+- Cada prestador acessa apenas o próprio dashboard.
+- Dashboard do prestador permite:
+  - visualizar agendamentos;
+  - confirmar agendamento;
+  - editar agendamento;
+  - remover agendamento;
+  - mandar WhatsApp para o cliente;
+  - cadastrar/editar/remover produtos ou serviços;
+  - inserir foto, valor, categoria e descrição;
+  - inserir logo, banners, cores e WhatsApp do estabelecimento.
+- Ao cliente solicitar agendamento, o sistema abre o WhatsApp do prestador com a mensagem pronta contendo nome, serviço, data e horário.
+- Uploads exibem resolução real da imagem enviada e recomendação de tamanho.
+- Logo configurada para preencher toda a moldura com `object-fit: cover`, evitando espaço branco.
+- Layout moderno, colorido, responsivo, com glassmorphism e detalhes 3D.
 
-## Login do prestador
+## Acessos de teste
 
-Usuário: `admin`  
-Senha: `123456`
+### Área de suporte
+- Usuário: `suporte`
+- Senha: `123456`
 
-## Como rodar localmente
+### Prestador 1
+- Usuário: `bella`
+- Senha: `123456`
 
-```bash
-npm install
-npm run dev
-```
-
-## Como gerar build
-
-```bash
-npm run build
-```
+### Prestador 2
+- Usuário: `prime`
+- Senha: `123456`
 
 ## Deploy no Cloudflare Pages
-
-Configurações recomendadas:
 
 - Framework preset: `Vite`
 - Build command: `npm run build`
 - Build output directory: `dist`
-- Node.js version: 20 ou superior
 
-## Observação importante sobre WhatsApp
+## Importante
 
-Esta versão é estática e funciona sem banco de dados, usando `localStorage` do navegador.
+Esta versão usa `localStorage`, ideal para protótipo, apresentação comercial e demonstração.
+Para transformar em SaaS real com dados online para vários clientes, o próximo passo é integrar com Supabase, autenticação real e armazenamento de imagens.
 
-Por segurança, navegadores não permitem envio silencioso/automático de WhatsApp sem ação do usuário ou sem API oficial. Por isso, ao agendar, o sistema abre o WhatsApp Web/App do prestador com a mensagem pronta.
-
-Para envio 100% automático em produção SaaS, será necessário integrar uma API oficial de WhatsApp, por exemplo:
-
-- WhatsApp Cloud API da Meta
-- Twilio WhatsApp
-- Z-API, Evolution API ou outra solução homologada
-
-## Próximo passo recomendado para SaaS real
-
-Para alugar para vários empreendedores, o ideal é evoluir este projeto com:
-
-- Supabase para banco de dados
-- Login individual por empreendedor
-- Tabela de empresas/clientes
-- Tabela de serviços por empresa
-- Tabela de agendamentos por empresa
-- API de WhatsApp integrada
-
-## Atualização: resolução correta das imagens
-
-O painel do prestador agora informa automaticamente a resolução real de cada imagem enviada:
-
-- Logo: mostra largura x altura em pixels, nome do arquivo, tipo e tamanho.
-- Banner: mostra resolução enviada e recomenda formato horizontal.
-- Imagem de serviço: mostra resolução enviada e recomenda formato quadrado ou horizontal.
-
-Tamanhos recomendados:
-
-- Logo: 800 x 800 px ou 1000 x 1000 px, preferencialmente PNG com fundo transparente.
-- Banner: 1600 x 600 px ou 1920 x 720 px.
-- Serviço: 1080 x 1080 px para card quadrado ou 1200 x 800 px para imagem horizontal.
-
-A logo continua sendo ajustada automaticamente para preencher a moldura sem deformar.
+Para envio 100% automático de WhatsApp sem abrir janela, será necessário integrar a API oficial do WhatsApp Business ou outro provedor autorizado.
