@@ -1,22 +1,41 @@
-# Sistema Web de Agendamento Marketplace SaaS
+# AgendaPro Marketplace SaaS - versão Cloudflare sem erro npm
 
-Versão corrigida para deploy no Cloudflare Pages.
+Esta versão foi criada para evitar erro do Cloudflare Pages com `npm clean-install`.
+Não usa React, Vite nem bibliotecas externas. É HTML/CSS/JS puro, mas mantém layout moderno, 3D, marketplace, dashboards e agendamentos.
 
 ## Configuração no Cloudflare Pages
 
-- Framework preset: Vite
-- Build command: npm run build
-- Build output directory: dist
-- Root directory: deixe vazio se os arquivos estiverem na raiz do repositório. Se você subir a pasta inteira, use: agendamento-web-pro
-
-## Correção aplicada
-
-O arquivo `package-lock.json` foi removido porque estava fazendo o Cloudflare usar `npm clean-install`, gerando erro de instalação. Também foram fixadas versões estáveis das dependências e adicionada uma `.npmrc` apontando para o registro público do npm.
+- Build command: `npm run build`
+- Build output directory: `dist`
+- Root directory: deixe vazio
+- Build system version: Version 3
 
 ## Logins de teste
 
-Área de Suporte:
-- Usuário: suporte
-- Senha: 123456
+Área de suporte:
+- usuário: `suporte`
+- senha: `admin123`
 
-Prestadores criados pelo suporte aparecem no login do prestador.
+Prestadores:
+- usuário: `bella`
+- senha: `123456`
+
+- usuário: `barbeiro`
+- senha: `123456`
+
+## Recursos
+
+- Vitrine pública de empresas/autônomos
+- Login separado para prestador
+- Login separado para suporte
+- Suporte cria logins dos clientes
+- Dashboard individual do prestador
+- Cadastro, edição e remoção de produtos/serviços
+- Logo, banner, cor e WhatsApp por prestador
+- Agendamento com status aguardando/confimado
+- Confirmação, edição, remoção e WhatsApp do cliente
+- Notificação via WhatsApp do prestador ao criar agendamento
+- Resolução real das imagens enviadas
+- Totalmente responsivo
+
+Observação: esta versão usa `localStorage` para demonstração. Para virar SaaS real com vários clientes e dados salvos em nuvem, o próximo passo é conectar Supabase.
