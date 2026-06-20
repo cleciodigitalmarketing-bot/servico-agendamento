@@ -1,12 +1,1 @@
-{
-  "name": "agendamento-marketplace-saas-static",
-  "version": "1.0.0",
-  "private": true,
-  "type": "module",
-  "scripts": {
-    "build": "node build.js",
-    "start": "node server.js"
-  },
-  "dependencies": {},
-  "devDependencies": {}
-}
+{"scripts":{"build":"rm -rf dist && mkdir -p dist && cp index.html dist/"},"dependencies":{},"devDependencies":{}}

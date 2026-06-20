@@ -1,41 +1,26 @@
-# AgendaPro Marketplace SaaS - versão Cloudflare sem erro npm
+# AgendaPro Business Marketplace
 
-Esta versão foi criada para evitar erro do Cloudflare Pages com `npm clean-install`.
-Não usa React, Vite nem bibliotecas externas. É HTML/CSS/JS puro, mas mantém layout moderno, 3D, marketplace, dashboards e agendamentos.
+Sistema web estático premium para marketplace/vitrine digital de empresas, serviços, produtos e agendamentos.
 
-## Configuração no Cloudflare Pages
+## Cloudflare Pages
 
-- Build command: `npm run build`
-- Build output directory: `dist`
-- Root directory: deixe vazio
-- Build system version: Version 3
+Framework preset: None / Nenhum
+Build command: npm run build
+Build output directory: dist
+Root directory: vazio
 
-## Logins de teste
+## Acessos demonstrativos
 
 Área de suporte:
-- usuário: `suporte`
-- senha: `admin123`
+- Login: suporte
+- Senha: 123456
 
-Prestadores:
-- usuário: `bella`
-- senha: `123456`
+Área da empresa/prestador:
+- Login: bella
+- Senha: 123456
+- Login: barber
+- Senha: 123456
 
-- usuário: `barbeiro`
-- senha: `123456`
+## Observação
 
-## Recursos
-
-- Vitrine pública de empresas/autônomos
-- Login separado para prestador
-- Login separado para suporte
-- Suporte cria logins dos clientes
-- Dashboard individual do prestador
-- Cadastro, edição e remoção de produtos/serviços
-- Logo, banner, cor e WhatsApp por prestador
-- Agendamento com status aguardando/confimado
-- Confirmação, edição, remoção e WhatsApp do cliente
-- Notificação via WhatsApp do prestador ao criar agendamento
-- Resolução real das imagens enviadas
-- Totalmente responsivo
-
-Observação: esta versão usa `localStorage` para demonstração. Para virar SaaS real com vários clientes e dados salvos em nuvem, o próximo passo é conectar Supabase.
+Esta é uma versão front-end demonstrativa usando localStorage. Para produção real SaaS, integrar Supabase/Firebase para banco de dados, autenticação e armazenamento de imagens.
