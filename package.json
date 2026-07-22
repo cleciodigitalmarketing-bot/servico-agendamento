@@ -1,11 +1,6 @@
 {
   "scripts": {
-    "build": "rm -rf dist && mkdir -p dist && cp index.html dist/",
-    "dev": "wrangler pages dev dist --d1=DB --r2=AD_VIDEOS",
-    "deploy": "npm run build && wrangler pages deploy dist"
+    "build": "rm -rf dist && mkdir -p dist && cp index.html dist/"
   },
-  "dependencies": {},
-  "devDependencies": {
-    "wrangler": "^4.0.0"
-  }
+  "dependencies": {}
 }
