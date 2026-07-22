@@ -1,0 +1,12 @@
+name = "servico-agendamento"
+compatibility_date = "2026-07-22"
+pages_build_output_dir = "dist"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "agendapro-db"
+database_id = "COLE_AQUI_O_ID_DO_D1"
+
+[[r2_buckets]]
+binding = "AD_VIDEOS"
+bucket_name = "agendapro-videos"
