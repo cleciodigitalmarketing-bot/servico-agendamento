@@ -44,12 +44,31 @@ const defaultServices = [
 const emptyClient = { nomeEmpresa: '', segmento: '', usuario: '', senha: '', whatsappEmpresa: '', logo: '', logoInfo: null, descricao: '', corPrimaria: '#7c3aed', corSecundaria: '#06b6d4', corDestaque: '#f97316', banners: [{ titulo: 'Promoção especial', texto: 'Divulgue seus serviços em destaque.', imagem: '', imageInfo: null }, { titulo: 'Atendimento com hora marcada', texto: 'Facilite o agendamento para seus clientes.', imagem: '', imageInfo: null }] };
 const initialBooking = { nome: '', telefone: '', serviceId: '', data: '', horario: HORARIOS[0], observacao: '' };
 const initialService = { id: '', nome: '', valor: '', descricao: '', categoria: '', imagem: '', imageInfo: null };
+const defaultAdSlots = [
+  { id: 'ad-left', titulo: 'Espaço publicitário', subtitulo: 'Divulgue sua marca, produto ou serviço', videos: [] },
+  { id: 'ad-right', titulo: 'Sua empresa em destaque', subtitulo: 'Anuncie para pessoas interessadas em serviços locais', videos: [] }
+];
 
 function readStore(key, fallback) { try { return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback)); } catch { return fallback; } }
 function onlyNumbers(v) { return String(v || '').replace(/\D/g, ''); }
 function formatDate(date) { if (!date) return ''; const [y,m,d] = date.split('-'); return `${d}/${m}/${y}`; }
 function waLink(phone, text) { const tel = onlyNumbers(phone); return `https://wa.me/55${tel}?text=${encodeURIComponent(text)}`; }
 function currency(v) { return String(v || '0,00').replace('R$','').trim(); }
+function filesToVideoData(files, cb, onError) {
+  const selected = Array.from(files || []);
+  if (!selected.length) return;
+  const invalid = selected.find(file => !file.type.startsWith('video/'));
+  if (invalid) return onError?.('Selecione somente arquivos de vídeo.');
+  const tooLarge = selected.find(file => file.size > 4 * 1024 * 1024);
+  if (tooLarge) return onError?.('Cada vídeo deve ter no máximo 4 MB nesta versão estática.');
+  Promise.all(selected.map(file => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve({ id: crypto.randomUUID(), url: reader.result, nome: file.name, tipo: file.type, sizeKb: Math.round(file.size/1024) });
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  }))).then(cb).catch(() => onError?.('Não foi possível processar um dos vídeos.'));
+}
+
 function fileToImageData(file, cb) {
   if (!file) return;
   const reader = new FileReader();
@@ -70,17 +89,20 @@ function App() {
   const [provider, setProvider] = useState(null);
   const [support, setSupport] = useState(false);
   const [toast, setToast] = useState('');
+  const [adSlots, setAdSlots] = useState(defaultAdSlots);
 
   useEffect(() => {
     setClients(readStore('saas-clients', defaultClients));
     setServices(readStore('saas-services', defaultServices));
     setAppointments(readStore('saas-appointments', []));
+    setAdSlots(readStore('saas-ad-slots', defaultAdSlots));
     const savedProvider = readStore('saas-provider-session', null); if (savedProvider) setProvider(savedProvider);
     setSupport(localStorage.getItem('saas-support-session') === 'true');
   }, []);
   useEffect(() => localStorage.setItem('saas-clients', JSON.stringify(clients)), [clients]);
   useEffect(() => localStorage.setItem('saas-services', JSON.stringify(services)), [services]);
   useEffect(() => localStorage.setItem('saas-appointments', JSON.stringify(appointments)), [appointments]);
+  useEffect(() => { try { localStorage.setItem('saas-ad-slots', JSON.stringify(adSlots)); } catch { notify('O armazenamento do navegador ficou cheio. Use vídeos menores ou remova arquivos antigos.'); } }, [adSlots]);
   useEffect(() => provider ? localStorage.setItem('saas-provider-session', JSON.stringify(provider)) : localStorage.removeItem('saas-provider-session'), [provider]);
   useEffect(() => localStorage.setItem('saas-support-session', String(support)), [support]);
 
@@ -103,11 +125,11 @@ function App() {
   return <main style={cssVars}>
     {toast && <div className="toast">{toast}</div>}
     <TopNav page={page} setPage={setPage} provider={provider} support={support} setProvider={setProvider} setSupport={setSupport}/>
-    {page === 'home' && <HomePage clients={clients} services={services} appointments={appointments} selectedClientId={selectedClientId} setSelectedClientId={setSelectedClientId} onBook={createAppointment}/>} 
+    {page === 'home' && <HomePage clients={clients} services={services} appointments={appointments} selectedClientId={selectedClientId} setSelectedClientId={setSelectedClientId} onBook={createAppointment} adSlots={adSlots}/>} 
     {page === 'providerLogin' && <ProviderLogin clients={clients} setProvider={setProvider} setPage={setPage} notify={notify}/>} 
     {page === 'supportLogin' && <SupportLogin setSupport={setSupport} setPage={setPage} notify={notify}/>} 
     {page === 'providerDashboard' && (provider ? <ProviderDashboard provider={provider} setProvider={setProvider} clients={clients} setClients={setClients} services={services} setServices={setServices} appointments={appointments} setAppointments={setAppointments} notify={notify}/> : <ProviderLogin clients={clients} setProvider={setProvider} setPage={setPage} notify={notify}/>) }
-    {page === 'supportDashboard' && (support ? <SupportDashboard clients={clients} setClients={setClients} services={services} appointments={appointments} notify={notify}/> : <SupportLogin setSupport={setSupport} setPage={setPage} notify={notify}/>) }
+    {page === 'supportDashboard' && (support ? <SupportDashboard clients={clients} setClients={setClients} services={services} appointments={appointments} notify={notify} adSlots={adSlots} setAdSlots={setAdSlots}/> : <SupportLogin setSupport={setSupport} setPage={setPage} notify={notify}/>) }
     <footer>AgendaPro Marketplace SaaS • Vitrine pública + dashboards por cliente • Pronto para GitHub e Cloudflare Pages</footer>
   </main>;
 }
@@ -124,7 +146,7 @@ function TopNav({ page, setPage, provider, support, setProvider, setSupport }) {
   </nav>
 }
 
-function HomePage({ clients, services, appointments, selectedClientId, setSelectedClientId, onBook }) {
+function HomePage({ clients, services, appointments, selectedClientId, setSelectedClientId, onBook, adSlots }) {
   const [query, setQuery] = useState('');
   const selected = clients.find(c => c.id === selectedClientId) || clients[0];
   const clientServices = services.filter(s => s.clientId === selected?.id);
@@ -142,6 +164,7 @@ function HomePage({ clients, services, appointments, selectedClientId, setSelect
       <div className="market-preview glass tilt"><div className="cube"><Store size={58}/></div><h2>Marketplace de agendamentos</h2><p>Vitrine pública + painel individual para cada cliente.</p></div>
     </section>
     <section className="stats"><Stat icon={<Building2/>} label="Clientes cadastrados" value={stats.empresas}/><Stat icon={<PackageCheck/>} label="Produtos e serviços" value={stats.servicos}/><Stat icon={<CalendarDays/>} label="Agendamentos" value={stats.agendamentos}/></section>
+    <section className="ad-showcase" aria-label="Espaços publicitários">{adSlots.map(slot => <VideoAdCarousel key={slot.id} slot={slot}/>)}</section>
     <section className="market-shell" id="vitrine">
       <aside className="company-sidebar glass">
         <div className="side-head"><h3><Store/> Empresas e autônomos</h3><label className="search"><Search size={16}/><input placeholder="Buscar empresa..." value={query} onChange={e=>setQuery(e.target.value)}/></label></div>
@@ -209,13 +232,32 @@ function ProviderDashboard({ provider, setProvider, clients, setClients, service
   </section>
 }
 
-function SupportDashboard({ clients, setClients, services, appointments, notify }) {
+function SupportDashboard({ clients, setClients, services, appointments, notify, adSlots, setAdSlots }) {
   const [form, setForm] = useState(emptyClient); const [editing, setEditing] = useState(null);
   function save(e) { e.preventDefault(); if (!form.nomeEmpresa || !form.usuario || !form.senha) return notify('Informe nome da empresa, usuário e senha.'); if (editing) { setClients(prev=>prev.map(c=>c.id===editing?{...form,id:editing}:c)); notify('Cliente atualizado.'); } else { setClients(prev=>[{...form,id:crypto.randomUUID()},...prev]); notify('Cliente criado com login próprio.'); } setForm(emptyClient); setEditing(null); }
   function edit(c) { setEditing(c.id); setForm(c); }
   function remove(id) { setClients(prev=>prev.filter(c=>c.id!==id)); notify('Cliente removido da vitrine.'); }
   function copyAccess(c) { navigator.clipboard?.writeText(`Login do prestador\nEmpresa: ${c.nomeEmpresa}\nUsuário: ${c.usuario}\nSenha: ${c.senha}`); notify('Dados de acesso copiados.'); }
-  return <section className="dashboard-page"><div className="dashboard-header glass"><div><span>Área de suporte</span><h1>Gerenciar clientes do SaaS</h1><p>Crie os acessos das empresas/autônomos que vão alugar o sistema.</p></div></div><section className="stats"><Stat icon={<Users/>} label="Clientes" value={clients.length}/><Stat icon={<PackageCheck/>} label="Itens cadastrados" value={services.length}/><Stat icon={<CalendarDays/>} label="Agendamentos" value={appointments.length}/></section><div className="admin-grid"><form className="admin-card glass" onSubmit={save}><h3><Plus/> {editing?'Editar cliente':'Criar login do cliente'}</h3><label>Nome da empresa/autônomo<input value={form.nomeEmpresa} onChange={e=>setForm({...form,nomeEmpresa:e.target.value})}/></label><label>Segmento<input value={form.segmento} onChange={e=>setForm({...form,segmento:e.target.value})}/></label><label>WhatsApp<input value={form.whatsappEmpresa} onChange={e=>setForm({...form,whatsappEmpresa:e.target.value})}/></label><div className="two-cols"><label>Usuário<input value={form.usuario} onChange={e=>setForm({...form,usuario:e.target.value})}/></label><label>Senha<input value={form.senha} onChange={e=>setForm({...form,senha:e.target.value})}/></label></div><label>Descrição<textarea value={form.descricao} onChange={e=>setForm({...form,descricao:e.target.value})}/></label><button className="primary full"><Save size={18}/> Salvar cliente</button>{editing && <button type="button" className="secondary full gap-top" onClick={()=>{setEditing(null); setForm(emptyClient)}}>Cancelar edição</button>}</form><div className="admin-card glass wide"><h3><LayoutDashboard/> Clientes cadastrados</h3><div className="client-table">{clients.map(c=><div className="client-row" key={c.id}><LogoBox logo={c.logo}/><div><b>{c.nomeEmpresa}</b><small>{c.segmento}</small><small>Login: {c.usuario} • Senha: {c.senha}</small></div><button onClick={()=>copyAccess(c)}><Copy size={16}/> Copiar</button><button onClick={()=>edit(c)}><Edit3 size={16}/> Editar</button><button className="delete" onClick={()=>remove(c.id)}><Trash2 size={16}/> Remover</button></div>)}</div></div></div></section>
+  function addVideos(slotId, files) { filesToVideoData(files, videos => { setAdSlots(prev => prev.map(slot => slot.id === slotId ? {...slot, videos:[...slot.videos, ...videos]} : slot)); notify(`${videos.length} vídeo(s) adicionado(s) ao carrossel.`); }, notify); }
+  function removeAdVideo(slotId, videoId) { setAdSlots(prev => prev.map(slot => slot.id === slotId ? {...slot, videos:slot.videos.filter(video => video.id !== videoId)} : slot)); notify('Vídeo removido do carrossel.'); }
+  function updateAdSlot(slotId, field, value) { setAdSlots(prev => prev.map(slot => slot.id === slotId ? {...slot, [field]:value} : slot)); }
+  return <section className="dashboard-page"><div className="dashboard-header glass"><div><span>Área de suporte</span><h1>Gerenciar clientes do SaaS</h1><p>Crie os acessos das empresas/autônomos que vão alugar o sistema.</p></div></div><section className="stats"><Stat icon={<Users/>} label="Clientes" value={clients.length}/><Stat icon={<PackageCheck/>} label="Itens cadastrados" value={services.length}/><Stat icon={<CalendarDays/>} label="Agendamentos" value={appointments.length}/></section><div className="admin-grid"><form className="admin-card glass" onSubmit={save}><h3><Plus/> {editing?'Editar cliente':'Criar login do cliente'}</h3><label>Nome da empresa/autônomo<input value={form.nomeEmpresa} onChange={e=>setForm({...form,nomeEmpresa:e.target.value})}/></label><label>Segmento<input value={form.segmento} onChange={e=>setForm({...form,segmento:e.target.value})}/></label><label>WhatsApp<input value={form.whatsappEmpresa} onChange={e=>setForm({...form,whatsappEmpresa:e.target.value})}/></label><div className="two-cols"><label>Usuário<input value={form.usuario} onChange={e=>setForm({...form,usuario:e.target.value})}/></label><label>Senha<input value={form.senha} onChange={e=>setForm({...form,senha:e.target.value})}/></label></div><label>Descrição<textarea value={form.descricao} onChange={e=>setForm({...form,descricao:e.target.value})}/></label><button className="primary full"><Save size={18}/> Salvar cliente</button>{editing && <button type="button" className="secondary full gap-top" onClick={()=>{setEditing(null); setForm(emptyClient)}}>Cancelar edição</button>}</form><div className="admin-card glass wide"><h3><LayoutDashboard/> Clientes cadastrados</h3><div className="client-table">{clients.map(c=><div className="client-row" key={c.id}><LogoBox logo={c.logo}/><div><b>{c.nomeEmpresa}</b><small>{c.segmento}</small><small>Login: {c.usuario} • Senha: {c.senha}</small></div><button onClick={()=>copyAccess(c)}><Copy size={16}/> Copiar</button><button onClick={()=>edit(c)}><Edit3 size={16}/> Editar</button><button className="delete" onClick={()=>remove(c.id)}><Trash2 size={16}/> Remover</button></div>)}</div></div><div className="admin-card glass wide"><h3><Megaphone/> Espaços publicitários em vídeo</h3><p className="muted">Envie vários vídeos em cada espaço. Eles serão reproduzidos em sequência e reiniciarão automaticamente ao final.</p><div className="ad-admin-grid">{adSlots.map(slot=><div className="ad-editor" key={slot.id}><label>Título<input value={slot.titulo} onChange={e=>updateAdSlot(slot.id,'titulo',e.target.value)}/></label><label>Chamada comercial<input value={slot.subtitulo} onChange={e=>updateAdSlot(slot.id,'subtitulo',e.target.value)}/></label><label className="upload ad-upload"><Upload/> Adicionar vídeos ao carrossel<input type="file" accept="video/*" multiple onChange={e=>{addVideos(slot.id,e.target.files);e.target.value=''}}/></label><small className="hint">Formatos recomendados: MP4/WebM, vertical ou horizontal, até 4 MB por arquivo.</small><VideoAdCarousel slot={slot} preview/>{slot.videos.length>0 && <div className="video-admin-list">{slot.videos.map((video,index)=><div key={video.id}><span><b>{index+1}. {video.nome}</b><small>{video.sizeKb} KB</small></span><button className="delete" onClick={()=>removeAdVideo(slot.id,video.id)}><Trash2 size={15}/> Remover</button></div>)}</div>}</div>)}</div></div></div></section>
+}
+
+
+function VideoAdCarousel({ slot, preview=false }) {
+  const [current, setCurrent] = useState(0);
+  const videos = slot.videos || [];
+  useEffect(() => { if (current >= videos.length) setCurrent(0); }, [videos.length, current]);
+  function nextVideo() { setCurrent(index => videos.length ? (index + 1) % videos.length : 0); }
+  return <article className={`video-ad-card ${preview?'preview':''}`}>
+    <div className="video-ad-head"><span><Megaphone size={15}/> PUBLICIDADE</span>{videos.length>1 && <small>{current+1}/{videos.length}</small>}</div>
+    <div className="video-stage">
+      {videos.length ? <video key={videos[current]?.id} src={videos[current]?.url} autoPlay muted playsInline controls={preview} onEnded={nextVideo} onError={nextVideo}/> : <div className="video-placeholder"><div className="ad-pulse"><Megaphone size={34}/></div><strong>{slot.titulo}</strong><p>{slot.subtitulo}</p><span>Anuncie aqui</span></div>}
+      {videos.length>1 && <div className="video-dots">{videos.map((video,index)=><button key={video.id} aria-label={`Exibir vídeo ${index+1}`} className={index===current?'active':''} onClick={()=>setCurrent(index)}/>)}</div>}
+    </div>
+    <div className="video-ad-copy"><strong>{slot.titulo}</strong><p>{slot.subtitulo}</p><span>Espaço disponível para locação</span></div>
+  </article>;
 }
 
 function AppointmentCard({ a, onConfirm, onRemove, onEdit }) {
